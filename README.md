@@ -27,10 +27,12 @@ And so on.
 
 ### Output Files
 Three output files are generated:
+```bash
 1.	<original graph filename>_deletion.txt: This file contains the list of each vertex and its core number after the edges in <list of edges to be inserted> have been deleted.
 2.	<original graph filename>_insertion.txt: This file contains the list of each vertex and its core number after the edges in <list of edges to be inserted> have been inserted.
 3.	<original graph filename>_outtime.txt: This file contains the time (in ms) taken to compute the core numbers in the following format:
 <original graph filename> <list of edges to be inserted> <time taken to delete edges and recompute core numbers> <time taken to insert edges and recompute core numbers>
+```
 
 ### Code Files
 graph_methods.h – this header file contains methods to initialize the graph, add/remove edges, compute the core number of vertices, compute the superior degree and constraint superior degree of vertices and write the core numbers to an output file.
