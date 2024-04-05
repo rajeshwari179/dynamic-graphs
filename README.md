@@ -31,6 +31,8 @@ Both files should be in .txt format and the data should be in the following form
 Three output files are generated:
 ```bash
 1.<original graph filename>_deletion.txt: This file contains the list of each vertex and its core number after the edges in <list of edges to be inserted> have been deleted.
+
+As of now, the serial implementation is complete. We are working on a parallelized approach using OpenMP.
 2.<original graph filename>_insertion.txt: This file contains the list of each vertex and its core number after the edges in <list of edges to be inserted> have been inserted.
 3.<original graph filename>_outtime.txt: This file contains the time (in ms) taken to compute the core numbers in the following format:
 
