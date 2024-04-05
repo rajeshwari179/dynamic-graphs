@@ -19,11 +19,13 @@ make
 ### Data Format
 
 Both files should be in .txt format and the data should be in the following format:
+```bash
 <from vertex 1> <to vertex 1>
 <from vertex 2> <to vertex 2>
 .
 .
-And so on.
+.
+```
 
 ### Output Files
 Three output files are generated:
