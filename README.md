@@ -47,3 +47,5 @@ graph_methods.h – this header file contains methods to initialize the graph, a
 core_maintenance.h – this header file contains methods to initialize the same graph with a structure that can be used to find vertices with superior edges efficiently after new edges have been inserted.
 
 main.cpp – has methods to find the k-superior edges and insert/delete superior edges into the graph.
+
+ligra-master.zip contains the correctness check we did using the Ligra framework. (ligra-master/tutorial/KCore)
