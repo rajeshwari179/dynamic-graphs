@@ -3,7 +3,7 @@ CSE6230-High Performance Parallel Computing Project
 
 ### Overview
 
-This repository contains a program that implements methods for computing and maintaining core numbers of vertices in a graph, before/after deleting and inserting edges.
+This repository contains a program that implements parallel methods for computing and maintaining core numbers of vertices in a graph, before/after deleting and inserting edges.
 
 ### To Build
 
