@@ -3,11 +3,22 @@
 #include<iostream>
 #include<stack>
 #include<algorithm>
-#include<pthread.h>
 #include<time.h>
 using namespace std;
 
-//typedef vector<int> vec;
+
+struct newvertex{
+    int id;
+    int core;
+
+    //adjacency list
+    vector<int> neighbours;
+    newvertex(){
+        id = core = 0;
+        neighbours.resize(0);
+    }
+
+};
 
 struct params{
     int k;
@@ -19,19 +30,6 @@ struct params{
         k = K;
         i = index;
     }
-};
-
-struct newvertex{
-    int id;
-    int core;
-
-    //adjacency list
-    vector<int> adjacent;
-    newvertex(){
-        id = core = 0;
-        adjacent.resize(0);
-    }
-
 };
 
 class newGraph
@@ -64,11 +62,14 @@ public: void clear(){
  //creating vertex objects for new vertices
  //updating the total vertex count, and adding edges to the graph
 public: void Map_index(vector<pair<int,int> > allNewEdges){
-    int from, to, index;
-    from = to = index = 0;
+   // int from, to, index;
+int from = 0;
+  int  to = 0;
+   int index = 0;
     for(size_t i=0;i<allNewEdges.size();i++){
-        from = allNewEdges[i].first;
-        to = allNewEdges[i].second;
+         from = allNewEdges[i].first;
+         to = allNewEdges[i].second;
+        //if either vertex is not in the map, add and create new vertex object
         if(index_map.find(from) == index_map.end()){
             index_map[from] = index;
             newvertex temp=newvertex();
@@ -89,10 +90,10 @@ public: void Map_index(vector<pair<int,int> > allNewEdges){
     
     //add edges to graph
 	for(int i=0;i<allNewEdges.size();i++){
-		int a = allNewEdges[i].first;
-		int b = allNewEdges[i].second;
-		addEdge(a,b);
-		addEdge(b,a);
+		//int a = allNewEdges[i].first;
+		//int b = allNewEdges[i].second;
+		addEdge(allNewEdges[i].first,allNewEdges[i].second);
+		addEdge(allNewEdges[i].second,allNewEdges[i].first);
 	}
 }
 
@@ -104,14 +105,14 @@ public: bool addEdge(int from, int to)
 	int index_f = index_map[from];
 	int index_t = index_map[to];
 	
-	int len = vertices[index_f].adjacent.size();
+	int len = vertices[index_f].neighbours.size();
 	for (int i = 0; i < len; i++) {
-		if (vertices[index_f].adjacent[i] == index_t)
+		if (vertices[index_f].neighbours[i] == index_t)
 			return false;
 	}
 
 	//store the edge
-	vertices[index_f].adjacent.push_back(index_t);
+	vertices[index_f].neighbours.push_back(index_t);
 	NumEdges++;
 	return true;
 }
@@ -124,18 +125,18 @@ public: bool deleteEdge(int from, int to){
         flag = false;
     }
     //delete from vertex
-    vector <int>::iterator Iter = std::find(vertices[index_f].adjacent.begin(),vertices[index_f].adjacent.end(), index_t);
-    if(Iter != vertices[index_f].adjacent.end()){
-        vertices[index_f].adjacent.erase(Iter);
+    vector <int>::iterator Iter = std::find(vertices[index_f].neighbours.begin(),vertices[index_f].neighbours.end(), index_t);
+    if(Iter != vertices[index_f].neighbours.end()){
+        vertices[index_f].neighbours.erase(Iter);
         NumEdges--;
     }
     else{
         flag = false;
     }
     //delete to vertex
-    vector<int>::iterator it1 = std::find(vertices[index_t].adjacent.begin(),vertices[index_t].adjacent.end(), index_f);
-    if(it1 != vertices[index_t].adjacent.end()){
-        vertices[index_t].adjacent.erase(it1);
+    vector<int>::iterator it1 = std::find(vertices[index_t].neighbours.begin(),vertices[index_t].neighbours.end(), index_f);
+    if(it1 != vertices[index_t].neighbours.end()){
+        vertices[index_t].neighbours.erase(it1);
         NumEdges--;
         flag = true;
     }
@@ -155,18 +156,35 @@ public: int GetNumEdges()
 	return NumEdges;
 }
 
-//set cores for new graph, if its a new vertex, core is default 0
-public: void SetCores(vector<int> allcores){
+public: int GetVertexId(int u)
+{
+	return vertices[u].id;
+}
+
+int GetVertexCore(int u)
+{
+	return vertices[u].core;
+}
+
+vector<int> GetVertexAdj(int u)
+{
+	return vertices[u].neighbours;
+}
+
+//set cores for new graph, if its a new vertex, core is 0
+public: void SetCores(vector<int> allcorenumbers){
 	for(int u=0;u<NumV;u++){
 		int idu = vertices[u].id;
-		if(idu+1 > allcores.size()){
+		if(idu+1 > allcorenumbers.size()){
+		//if(idu >= allcorenumbers.size()){
 			vertices[u].core = 0;
 		}else{
-			vertices[u].core = allcores[idu];
+			vertices[u].core = allcorenumbers[idu];
 		}
 	}
 }
 
+//Used in Algorithm 1
 //get root core numbers and first vertex with that core number
 //find vertices with superior edges
 public: vector<params> GetRootVertices(){
@@ -174,18 +192,19 @@ public: vector<params> GetRootVertices(){
 	vector<params> parameters;
 	int vertex_index = 0;
 	for(int u=0;u<NumV;u++){
-		int coreu = vertices[u].core;
-		int root_core = coreu;
+	//	int coreu = vertices[u].core;
+		int root_core = vertices[u].core;
 		//vertex u has a neighbor with larger core number
 		bool flag = false;
-		for(int i=0;i<vertices[u].adjacent.size();i++){
-			int v = vertices[u].adjacent[i];
-			int corev = vertices[v].core;
-			if(corev >= coreu){
+		for(int i=0;i<vertices[u].neighbours.size();i++){
+			int v = vertices[u].neighbours[i];
+			//int corev = vertices[v].core;
+			if(vertices[v].core >= vertices[u].core){
 				flag = true;
 				break;
 			}
 		}
+        //if u connects to a superior edge in E' and core(u) is not in C
 		//if u has a neighbour with higher core number, add u's core number to root_cores list if its not there
 		//(basically find vertices with superior edges)
 		if(flag){
@@ -199,20 +218,5 @@ public: vector<params> GetRootVertices(){
 		}
 	}
 	return parameters;
-}
-				
-public: int GetVertexId(int u)
-{
-	return vertices[u].id;
-}
-
-int GetVertexCore(int u)
-{
-	return vertices[u].core;
-}
-
-vector<int> GetVertexAdj(int u)
-{
-	return vertices[u].adjacent;
 }
 };

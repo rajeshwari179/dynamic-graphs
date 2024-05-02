@@ -1,7 +1,6 @@
 #include<vector>
 #include<map>
 #include<stack>
-#include<pthread.h>
 #include<time.h>
 #include<algorithm>
 #include<fstream>
@@ -289,7 +288,6 @@ void  InsertEdge(int u1, int u2)
                 if(corew == K && sdw > K &&(!vertices[w].visited)){
                     s.push(w);
                     vertices[w].visited = true;
-                    //idk why it is incremented by CSD
                     vertices[w].cd += vertices[w].csd;
                 }
             }
@@ -308,12 +306,12 @@ void  InsertRemoveSerial(int k, int v )
     vertices[v].removed=true;
     for(int i=0;i<edges[v].size();i++){
         int w=edges[v][i];
-        int corew = vertices[w].core;
-        if(corew == k){
+        //int corew = vertices[w].core;
+        if(vertices[w].core == k){
             vertices[w].cd--;
-            int cdw = vertices[w].cd;
+            //int cdw = vertices[w].cd;
             //if w also has core number k, it has to be removed.
-            if(cdw == k && !vertices[w].removed){
+            if(vertices[w].cd == k && !vertices[w].removed){
                 InsertRemoveSerial(k,w);
             }
 		}
@@ -361,15 +359,15 @@ void  DeleteRemove(int k, int v)
     vertices[v].core--;
     for(int i=0;i< edges[v].size();i++){
         int w= edges[v][i];
-        int corew =   vertices[w].core;
-        if(corew == k){
+        //int corew =   vertices[w].core;
+        if(vertices[w].core == k){
             if(!  vertices[w].visited){
                   vertices[w].cd += vertices[w].sd;
                   vertices[w].visited = true;
             }
               vertices[w].cd--;
-            int cdw = vertices[w].cd;
-            if(cdw < k && ! vertices[w].removed){
+            //int cdw = vertices[w].cd;
+            if(vertices[w].cd < k && ! vertices[w].removed){
                 DeleteRemove(k,w);
             }
         }
@@ -384,9 +382,9 @@ void computeSD(){
         for(int j=0;j<edges[v].size();j++)
         {
             int w=edges[v][j];
-            int corev=vertices[v].core;
-            int corew=vertices[w].core;
-            if(corew >= corev){
+            //int corev=vertices[v].core;
+            //int corew=vertices[w].core;
+            if(vertices[w].core >= vertices[v].core){
                 vertices[v].sd++;
             }
         }
@@ -400,15 +398,125 @@ void computeCSD(){
         for(int j=0;j<edges[v].size();j++)
         {
             int w=edges[v][j];
-            int corev=vertices[v].core;
-            int corew=vertices[w].core;
-            int sdw=vertices[w].sd;
-            if(corew > corev ||
-               (corew == corev && sdw> corev)){
+            //int corev=vertices[v].core;
+            //int corew=vertices[w].core;
+            //int sdw=vertices[w].sd;
+            if(vertices[w].core > vertices[v].core ||
+               (vertices[w].core == vertices[v].core && vertices[w].sd> vertices[v].core)){
                     vertices[v].csd++;
             }
         }
     }
+}
+
+
+//parallel methods
+
+
+//decrease core numbers for vertices that are visited and removed
+void delCores(){
+	for(int i=0;i<NumV;i++){
+		if((vertices[i].visited)&&(vertices[i].removed)){
+			vertices[i].core--;
+			allcorenums[i]--;
+		}
+	}
+}
+
+//increase core numbers for vertices that are visited but not removed
+void insCores(){
+	for(int i=0;i<NumV;i++){
+		if((vertices[i].visited)&&(!vertices[i].removed)){
+			vertices[i].core++;
+			allcorenums[i]--;
+		}
+	}
+}
+//vectorize
+
+/*void insCores(){
+    std::vector<int> coresToAdd(NumV, 0);
+	for(int i=0;i<NumV;i++){
+		if((vertices[i].visited)&&(!vertices[i].removed)){
+            coresToAdd[i] = 1;
+		}
+	}
+    //vectorized addition
+    #pragma omp simd
+    for(int i=0;i<NumV;i++){
+        vertices[i].core += coresToAdd[i];
+        allcorenums[i] -= coresToAdd[i];
+    }
+}*/
+
+
+
+//given a superior edge set, compute the (superior degree) for vertices in the EXPTree
+//Used in Algorithm 2
+//Build K-path tree rooted at r
+ void computeInsertSD(vector<pair<int,int>> superioredges){
+    map<int,bool> visited;	
+    for(int i = 0;i < superioredges.size();i++){
+        stack<int> s;
+        int a = superioredges[i].first;
+        int b = superioredges[i].second;
+       // int sizea = edges[a].size();
+        //int sizeb = edges[b].size();
+        //int corea = vertices[a].core;
+        //int coreb = vertices[b].core;
+        //root vertex is the one with smaller core number - because this would have more superior edges
+        int r = a;
+        int core_r = vertices[a].core;
+        int edges_r = edges[a].size();
+        if(vertices[a].core > vertices[b].core){
+            r = b;
+            core_r = vertices[b].core;
+            edges_r = edges[b].size();
+        }
+        //visit 
+        //if(!visited[r] && !removed[r])
+		if(!visited[r]){
+			s.push(r);
+			visited[r] = true;
+			//check how many neighbours of r have higher core number and update SD of r
+			for(int j=0;j<edges_r;j++)
+			{
+				int w = edges[r][j];
+				int core_w = vertices[w].core;
+				if(core_w >= core_r){
+					vertices[r].sd++;
+				}
+			}
+		   while(!s.empty()){
+				int v=s.top();
+				s.pop();
+				//int sizev = edges[v].size();
+				//int corev = vertices[v].core;
+				//v's neighbours - check how many have same core number and visit them
+				for(int j=0;j<edges[v].size();j++){
+					int p = edges[v][j];
+					if(vertices[p].core == vertices[v].core && !visited[p]){
+						s.push(p);
+						//vertices[p].visited = true;
+						visited[p] = true;
+						//compute superior degree if it hasn't been computed
+						if(!vertices[p].sd){
+							//int sizep = edges[p].size();
+							//int corep = vertices[p].core;
+							for(int k = 0;k < edges[p].size();k ++){
+								int w = edges[p][k];
+								//int corew = vertices[w].core;
+								if(vertices[w].core >= vertices[p].core){
+									vertices[p].sd++;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 }
 
 
@@ -424,13 +532,13 @@ void computeCSD(){
 
 //compute SD (Superior Degree) for a vertex v
  void computeSD(int v){
-    int corev = vertices[v].core;
-    int sizev = edges[v].size();
-    for(int j=0;j<sizev;j++)
+    //int corev = vertices[v].core;
+    //int sizev = edges[v].size();
+    for(int j=0;j<edges[v].size();j++)
     {
         int w = edges[v][j];
-        int corew = vertices[w].core;
-        if(corew >= corev){
+        //int corew = vertices[w].core;
+        if(vertices[w].core >= vertices[v].core){
             vertices[v].sd++;
         }
     }
@@ -439,13 +547,13 @@ void computeCSD(){
 
 //compute CSD (Constraint Superior Degree) for a vertex v
  void computeCSD(int v){
-    int corev = vertices[v].core;
-    int sizev = edges[v].size();
-    for(int j=0;j< sizev;j++){
+   // int corev = vertices[v].core;
+    //int sizev = edges[v].size();
+    for(int j=0;j< edges[v].size();j++){
         int w = edges[v][j];
-        int corew = vertices[w].core;
-        int sdw = vertices[w].sd;
-        if(corew > corev || (corew == corev && sdw > corev)){
+        //int corew = vertices[w].core;
+        //int sdw = vertices[w].sd;
+        if(vertices[w].core > vertices[v].core || (vertices[w].core == vertices[v].core && vertices[w].sd > vertices[v].core)){
             vertices[v].csd++;
         }
     }
@@ -471,6 +579,9 @@ void WriteCores(string corefile){
 	}
 	fcore.close();
 }
+
+
+
 
 };
 
