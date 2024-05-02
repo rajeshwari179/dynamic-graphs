@@ -26,6 +26,7 @@ Both files should be in .txt format and the data should be in the following form
 .
 .
 ```
+All test files from SNAP are in input.zip
 
 ### Output Files
 Three output files are generated:
@@ -38,6 +39,7 @@ As of now, the serial implementation is complete. We are working on a paralleliz
 
 <original graph filename> <list of edges to be inserted> <time to delete edges and recompute core numbers> <time to insert edges and recompute core numbers>
 ```
+All output files are in output.zip
 
 ### Code Files
 graph_methods.h – this header file contains methods to initialize the graph, add/remove edges, compute the core number of vertices, compute the superior degree and constraint superior degree of vertices and write the core numbers to an output file.
